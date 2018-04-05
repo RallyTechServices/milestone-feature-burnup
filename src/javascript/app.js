@@ -487,7 +487,7 @@ console.log("CCD 3: ", myCalc);
         };
 console.log("before chart: ", extent.isoStart);
         // release start and end dates
-        var startOnISOString = "2015-06-18T15:50:31Z";
+        var startOnISOString = "2017-01-01T15:50:31Z";
 console.log("start: ", extent.isoStart, startOnISOString);
 //        var upToDateISOString = new lumenize.Time(extent.end).getISOStringInTZ(config.tz);
         var upToDateISOString = "2018-06-18T15:50:31Z";
@@ -506,7 +506,7 @@ console.log("end: ", extent.isoEnd, upToDateISOString);
                 });
             }
         });
-console.log(
+
         var hc = myCalc.lumenize.arrayOfMaps_To_HighChartsSeries(calculator.getResults().seriesData, hcConfig);
 
         this.showChart( trimHighChartsConfig(hc) );
@@ -565,6 +565,8 @@ console.log(
         var tickInterval = series[1].data.length <= (7*20) ? 7 : (series[1].data.length / 20);
 
         var extChart = Ext.create('Rally.ui.chart.Chart', {
+            width: 800,
+            height: 600,
             columnWidth : 1,
             itemId : "chart1",
             chartData: {
@@ -578,7 +580,7 @@ console.log(
                 chart: {
                 },
                 title: {
-                text: 'Feature Burnup ('+ app.configReleases  +')' ,
+                text: 'Milestone Burnup ('+ app.milestones  +')' ,
 
                 x: -20 //center
                 },
