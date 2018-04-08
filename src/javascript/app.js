@@ -5,16 +5,17 @@ var app = null;
 var showAssignedProgram = true;
 
 Ext.define('CArABU.app.MsBurn', {
-    scopeType: 'release',
+//    scopeType: 'release',
     extend: 'Rally.app.App',
     componentCls: 'app',
 
-    // switch to app configuration from ui selection
-    config: {
+    items: [
+        {xtype:'container',itemId:'selector_box', layout: 'hbox'},
+//        {xtype:'container',itemId:'display_box'}
+    ],
 
+    config: {
         defaultSettings : {
-            releases                : "",
-            epicIds                 : "",
             ignoreZeroValues        : true,
             flatScopeProjection     : false,
             completionDateScope     : false,
@@ -33,12 +34,12 @@ Ext.define('CArABU.app.MsBurn', {
             FeatureCountCompleted   : false,
             HistoricalProjection    : false,
             RefinedEstimate : false
-
         }
-
     },
 
     getSettingsFields: function() {
+console.log("getSettingsFields");
+//        this.setLoading("Loading settings...");
 
         var scopeTypeStore = new Ext.data.ArrayStore({
             fields: ['scope'],
@@ -50,45 +51,9 @@ Ext.define('CArABU.app.MsBurn', {
         });
 
         var values = [
-
-            {
-                name: 'releases',
-                xtype: 'rallytextfield',
-                // label : "Release names to be included (comma seperated)",
-                // width : 400
-                boxLabelAlign: 'after',
-                fieldLabel: 'Releases',
-                margin: '0 0 15 50',
-                labelStyle : "width:200px;",
-                afterLabelTpl: 'Release name(s) to be included (comma separated)',
-                width : 600
-            },
-            {
-                name: 'milestones',
-                xtype: 'rallytextfield',
-                // label : "Release names to be included (comma seperated)",
-                // width : 400
-                boxLabelAlign: 'after',
-                fieldLabel: 'Milestone',
-                margin: '0 0 15 50',
-                labelStyle : "width:200px;",
-                afterLabelTpl: '(Optional)Limit to features for this milestone',
-                width : 600
-            },
-            {
-                name: 'epicIds',
-                xtype: 'rallytextfield',
-//                label : "(Optional) List of Parent PortfolioItem (Epics) ids to filter Features by"
-                boxLabelAlign: 'after',
-                fieldLabel: 'Epics',
-                margin: '0 0 15 50',
-                labelStyle : "width:200px;",
-                afterLabelTpl: '(Optional) List of Parent PortfolioItem (Epics) ids to filter Features by'
-            },
             {
                 name: 'ignoreZeroValues',
                 xtype: 'rallycheckboxfield',
-                // label: 'For projection ignore zero values'
                 boxLabelAlign: 'after',
                 fieldLabel: 'ignoreZeroValues',
                 margin: '0 0 15 50',
@@ -98,7 +63,6 @@ Ext.define('CArABU.app.MsBurn', {
             {
                 name: 'flatScopeProjection',
                 xtype: 'rallycheckboxfield',
-                // label: 'For projection ignore zero values'
                 boxLabelAlign: 'after',
                 fieldLabel: 'Flat Scope Projection',
                 margin: '0 0 15 50',
@@ -108,20 +72,15 @@ Ext.define('CArABU.app.MsBurn', {
             {
                 name: 'completionDateScope',
                 xtype: 'rallycheckboxfield',
-                // label: 'For projection ignore zero values'
                 boxLabelAlign: 'after',
                 fieldLabel: 'Use count for Expected Completion Date',
                 margin: '0 0 15 50',
                 labelStyle : "width:300px;",
                 afterLabelTpl: '(otherwise based on points)'
             },
-
-            // featureCompleteByState  : false,
-            // featureCompleteState    : "",
             {
                 name: 'featureCompleteByState',
                 xtype: 'rallycheckboxfield',
-                // label: 'For projection ignore zero values'
                 boxLabelAlign: 'after',
                 fieldLabel: 'True if feature completed is based on feature state',
                 margin: '0 0 15 50',
@@ -131,16 +90,13 @@ Ext.define('CArABU.app.MsBurn', {
             {
                 name: 'featureCompleteState',
                 xtype: 'rallytextfield',
-//                label : "(Optional) List of Parent PortfolioItem (Epics) ids to filter Features by"
                 boxLabelAlign: 'after',
                 fieldLabel: 'Only used if Feature Complete By State is set to true (above)',
                 margin: '0 0 15 50',
                 labelStyle : "width:200px;",
                 afterLabelTpl: '(Optional) Feature state for completed features'
             },
-
         ];
-
 
         _.each(values,function(value){
             value.labelWidth = 250;
@@ -151,24 +107,48 @@ console.log("Values: ",checkValues, values)
     },
 
     launch: function() {
-
+console.log("LAUNCH");
         app = this;
         app.series = createSeriesArray();
-        app.configReleases = app.getSetting("releases");
         app.ignoreZeroValues = app.getSetting("ignoreZeroValues");
         app.flatScopeProjection = app.getSetting("flatScopeProjection");
-        app.epicIds = app.getSetting("epicIds");
-        app.milestones = "chasb-KMD";
-//        app.milestones = app.getSetting("milestones");
         app.completionDateScope = app.getSetting("completionDateScope")
-        // featureCompleteByState  : false,
-        // featureCompleteState    : "",
         app.featureCompleteByState = app.getSetting("featureCompleteByState");
         app.featureCompleteState = app.getSetting("featureCompleteState");
+        app.msName = "";
+        app.msDate = "";
+//        app.milestones = "";
+//        app.milestones = app.getSetting("milestones");
+//        app.epicIds = app.getSetting("epicIds");
+//        app.configReleases = app.getSetting("releases");
+        // featureCompleteByState  : false,
+        // featureCompleteState    : "",
 
-// CB
-//        if (app.configReleases==="") {
-        if (app.milestones==="") {
+        var selectMilestone = this.down('#selector_box').add({
+            xtype: 'rallymilestonecombobox',
+            clearText: 'Select a Milestone: ',
+            itemId: 'get_milestone',
+            name: 'get_milestone',
+            margin: 10,
+            allowClear: true,
+            storeConfig: {
+            },
+            listeners: {
+                scope: this,
+                change: function(me, newValue, oldValue) {
+                    if (newValue) {
+                        app.milestones = newValue;
+                        app.msName = me.getRecord().get('Name');
+                        app.msDate = me.getRecord().get('TargetDate');
+console.log("Change: ",newValue, app.msName, app.msDate, oldValue);
+                        app.dothisnext();
+                    }
+                }
+            }
+        });
+    },
+    dothisnext: function() {
+        if (app.msName === "") {
             this.add({html:"Please Configure this app by selecting 'Edit App Settings' menu item from Configure (gear icon) Menu (top right)"});
             return;
         }
@@ -178,11 +158,11 @@ console.log("Values: ",checkValues, values)
         this.project = this.getContext().getProject().ObjectID;
 
         // get the release (if on a page scoped to the release)
-        var tbName = getReleaseTimeBox(this);
+//        var tbName = getReleaseTimeBox(this);
         // release selected page will over-ride app config
 // CB
 //        app.configReleases = tbName !== "" ? tbName : app.configReleases;
-        app.milestones = tbName !== "" ? tbName : app.milestones;
+//        app.milestones = tbName !== "" ? tbName : app.milestones;
 
         var configs = [];
 
@@ -198,7 +178,7 @@ console.log("Values: ",checkValues, values)
 //        });
         configs.push({ model : "Milestone",
                        fetch : ['Name', 'ObjectID','Artifacts', 'Projects', 'TargetDate', 'TargetProject' ],
-                       filters: [{property: 'Name', operator: '=', value: app.milestones}]
+                       filters: [{property: 'Name', operator: '=', value: app.msName}]
 
 //                       filters: [app.createReleaseFilter(app.configReleases)]
         });
@@ -215,7 +195,7 @@ console.log("Results: ", results);
             app.featureType = results[2][0].get("TypePath");
 
             if (app.releases.length===0) {
-                app.add({html:"No Milestomes found with this name: "+app.milestones});
+                app.add({html:"No Milestones found with this name: "+app.milestones});
                 return;
             }
 
@@ -229,20 +209,18 @@ console.log("Results: ", results);
 
             // get the iterations
             async.map( configs, app.wsapiQuery, function(err,results) {
-
                 app.iterations = results[0];
-
-                if (app.epicIds.split(",")[0] !=="")
-                    app.queryEpicFeatures();
-                else
-                    app.queryFeatures();
+console.log("Iterations: ", app.iterations);
+                app.queryFeatures();
 
             });
         });
+                this.setLoading(false);
     },
 
     // remove leading and trailing spaces
     trimString : function (str) {
+console.log("trimString");
         return str.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
     },
 
@@ -250,7 +228,7 @@ console.log("Results: ", results);
 
     // creates a filter to return all releases with a specified set of names
     createReleaseFilter : function(releaseNames) {
-
+console.log("createReleaseFilter");
         var filter = null;
 
         _.each( releaseNames.split(","), function( releaseName, i ) {
@@ -267,7 +245,7 @@ console.log("Results: ", results);
     },
 
     createIterationFilter : function(releases) {
-
+console.log("createReleaseFilter");
         var extent = app.getReleaseExtent(releases);
 
         var filter = Ext.create('Rally.data.wsapi.Filter', {
@@ -284,7 +262,7 @@ console.log("Results: ", results);
 
 //    getReleaseExtent : function( releases ) {
     getReleaseExtent : function( features ) {
-
+console.log("getReleaseExtent");
         var start = _.min(_.pluck(features,function(r) { return r.get("ActualStartDate");}));
         var end   = _.max(_.pluck(features,function(r) { return r.get("ActualEndDate");}));
         var isoStart  = Rally.util.DateTime.toIsoString(start, false);
@@ -305,7 +283,7 @@ console.log("ISO dates: ", isoStart, isoEnd);
 
     // generic function to perform a web services query
     wsapiQuery : function( config , callback ) {
-
+console.log("wsapiQuery");
         Ext.create('Rally.data.WsapiDataStore', {
             autoLoad : true,
             limit : "Infinity",
@@ -321,9 +299,9 @@ console.log("ISO dates: ", isoStart, isoEnd);
         });
 
     },
-
+/*
     queryEpicFeatures : function() {
-
+console.log("queryEpicFeatures");
         myMask = new Ext.LoadMask(Ext.getBody(), {msg:"Please wait..."});
 
         var filter = null;
@@ -364,11 +342,13 @@ console.log("ISO dates: ", isoStart, isoEnd);
         });
 
     },
-
+*/
     queryFeatures : function() {
-
+console.log("queryFeatures");
+        this.setLoading("Loading Features for Milestone...");
         myMask = new Ext.LoadMask(Ext.getBody(), {msg:"Please wait..."});
         var filter = null;
+        var me = this;
 
         var releaseNames = _.uniq(_.map(app.releases,function(r){ return r.get("Name");}));
         console.log("releaseNames",releaseNames);
@@ -400,7 +380,7 @@ console.log("ISO dates: ", isoStart, isoEnd);
             model : app.featureType,
             limit : 'Infinity',
             fetch: ['ObjectID','FormattedID','Milestones','Name','ActualStartDate' ],
-            filters: [{property: "Milestones.Name", operator: "=", value: app.milestones}],
+            filters: [{property: "Milestones.Name", operator: "=", value: app.msName}],
 //            filters: [filter],
             listeners: {
                 load: function(store, features) {
@@ -408,7 +388,9 @@ console.log("ISO dates: ", isoStart, isoEnd);
                     console.log(_.map(features,function(f){return f.get("FormattedID")}));
                     app.features = features;
                     if (app.features.length === 0) {
-                        app.add({html:"No features in release(s):"+app.configReleases});
+//                        app.add({html:"No features for Milestone:"+app.msName});
+                me.setLoading(false);
+                        alert("No features for Milestone: "+app.msName);
                         return;
                     } else {
                     app.queryFeatureSnapshots();
@@ -419,7 +401,8 @@ console.log("ISO dates: ", isoStart, isoEnd);
     },
 
     queryFeatureSnapshots : function () {
-
+console.log("queryFeatureSnapshots");
+        this.setLoading("Loading snapshots...");
         var ids = _.pluck(app.features, function(feature) { return feature.get("ObjectID");} );
         var extent = app.getReleaseExtent(app.features);
         // var pes = _.pluck(app.features, function(feature) { return feature.get("PreliminaryEstimate");} );
@@ -452,6 +435,7 @@ console.log("ISO dates: ", isoStart, isoEnd);
 
     createChartData : function ( snapshots ) {
 console.log("CCD 1");
+        this.setLoading("Aggregating data...");
         var that = this;
 //        var lumenize = Rally.data.lookback.Lumenize || window.parent.Rally.data.lookback.Lumenize;
         var snapShotData = _.map(snapshots,function(d){return d.data;});
@@ -513,12 +497,14 @@ console.log("end: ", extent.isoEnd, upToDateISOString);
     },
 
     createPlotLines : function(seriesData) {
-
+console.log("createPlotLines-seriesdata",seriesData);
         // filter the iterations
         var start = new Date( Date.parse(seriesData[0]));
         var end   = new Date( Date.parse(seriesData[seriesData.length-1]));
+console.log("createPlotLines-start-end",start,end);
         var releaseI = _.filter(this.iterations,function(i) { return i.get("EndDate") >= start && i.get("EndDate") <= end;});
         releaseI = _.uniq(releaseI,function(i) { return i.get("Name");});
+console.log("createPlotLines-releaseI",releaseI);
         var itPlotLines = _.map(releaseI, function(i){
             var d = new Date(Date.parse(i.raw.EndDate)).toISOString().split("T")[0];
             return {
@@ -530,23 +516,27 @@ console.log("end: ", extent.isoEnd, upToDateISOString);
             };
         });
         // create release plot lines
-        var rePlotLines = _.map(this.selectedReleases, function(i){
-            var d = new Date(Date.parse(i.raw.ReleaseDate)).toISOString().split("T")[0];
+//console.log("createPlotLines",this.selectedReleases,selectedReleases.raw.ReleaseDate);
+//        var rePlotLines = _.map(this.selectedReleases, function(i){
+        var rePlotLines = _.map(app.milestones, function(i){
+            var d = new Date(Date.parse(app.msDate)).toISOString().split("T")[0];
             return {
-                label : i.get("Name"),
+                label : app.msName,
                 // dashStyle : "Dot",
                 color: 'grey',
                 width: 1,
                 value: _.indexOf(seriesData,d)
             };
         });
+console.log("createPlotLines",itPlotLines,rePlotLines);
         return itPlotLines.concat(rePlotLines);
 
     },
 
 
     showChart : function(series) {
-
+console.log("showChart");
+        this.setLoading("Building Chart...");
         var that = this;
 
         app.expectedCompletionDate = calcCompletionIndex1(series,
@@ -554,17 +544,21 @@ console.log("end: ", extent.isoEnd, upToDateISOString);
         console.log("Expected Completed Date1",app.expectedCompletionDate);
 
         var chart = this.down("#chart1");
-        myMask.hide();
         if (chart !== null)
             chart.removeAll();
 
         // create plotlines
+console.log("showChart",series[0].data);
         var plotlines = this.createPlotLines(series[0].data);
+console.log("showChart",plotlines);
 
         // set the tick interval
+//        var tickInterval = series[1].data.length <= (7*20) ? 7 : (series[1].data.length / 20);
         var tickInterval = series[1].data.length <= (7*20) ? 7 : (series[1].data.length / 20);
+console.log("showChart",tickInterval);
 
         var extChart = Ext.create('Rally.ui.chart.Chart', {
+//        var chart = this.down("#display_box").add({
             width: 800,
             height: 600,
             columnWidth : 1,
@@ -580,7 +574,7 @@ console.log("end: ", extent.isoEnd, upToDateISOString);
                 chart: {
                 },
                 title: {
-                text: 'Milestone Burnup ('+ app.milestones  +')' ,
+                text: 'Milestone Burnup ('+ app.msName  +')' ,
 
                 x: -20 //center
                 },
@@ -620,9 +614,10 @@ console.log("end: ", extent.isoEnd, upToDateISOString);
                 legend: { align: 'center', verticalAlign: 'bottom' }
             }
         });
-        console.log("adding chart ",extChart);
+console.log("adding chart ",extChart);
         this.add(extChart);
-        chart = this.down("#chart1");
+        chart = this.down("#chart1"); //#display_box
+        this.setLoading(false);
         var p = Ext.get(chart.id);
         elems = p.query("div.x-mask");
         _.each(elems, function(e) { e.remove(); });

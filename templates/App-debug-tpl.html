@@ -4,18 +4,21 @@
     <title><%= name %></title>
     <!--  (c) 2017 CA Technologies.  All Rights Reserved. -->
     <!--  Build Date: <%= new Date() %> -->
-    
+
     <script type="text/javascript">
         var APP_BUILD_DATE = "<%= new Date() %>";
         var ARTIFACT = "<%= artifact  %>";
         var BUILDER  = "[%= builder %]";
         var CHECKSUM = [%= checksum %];
     </script>
-    
+
     <script type="text/javascript" src="<%= auth.server %>/apps/<%= sdk %>/sdk-debug.js"></script>
-    <!-- our highcharts (needed so that we can add patterns) 
-    <script type="text/javascript" src="/apps/<%= sdk %>/lib/analytics/analytics-all.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/async/1.22/async.min.js"></script>
+
+    <!-- our highcharts (needed so that we can add patterns)
     -->
+
+    <script type="text/javascript" src="/apps/<%= sdk %>/lib/analytics/analytics-all.js"></script>
 
     <script type="text/javascript">
         Rally.onReady(function() {
@@ -28,10 +31,10 @@
         });
     </script>
 <%
-    _.each( css_files, function(element) { 
-        print('<link rel="stylesheet" type="text/css" href="' + element + '">'); 
+    _.each( css_files, function(element) {
+        print('<link rel="stylesheet" type="text/css" href="' + element + '">');
      });
-    
+
 %>
 
 </head>
