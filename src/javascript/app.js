@@ -5,13 +5,11 @@ var app = null;
 var showAssignedProgram = true;
 
 Ext.define('CArABU.app.MsBurn', {
-//    scopeType: 'release',
     extend: 'Rally.app.App',
     componentCls: 'app',
 
     items: [
-        {xtype:'container',itemId:'selector_box', layout: 'hbox'},
-//        {xtype:'container',itemId:'display_box'}
+        {xtype:'container',itemId:'selector_box', layout: 'hbox'}
     ],
 
     config: {
@@ -38,9 +36,7 @@ Ext.define('CArABU.app.MsBurn', {
     },
 
     getSettingsFields: function() {
-console.log("getSettingsFields");
-//        this.setLoading("Loading settings...");
-
+//console.log("getSettingsFields");
         var scopeTypeStore = new Ext.data.ArrayStore({
             fields: ['scope'],
             data : [['Count'],['Points']]
@@ -102,12 +98,12 @@ console.log("getSettingsFields");
             value.labelWidth = 250;
             value.labelAlign = 'left'
         });
-console.log("Values: ",checkValues, values)
+//console.log("Values: ",checkValues, values)
         return values.concat(checkValues);
     },
 
     launch: function() {
-console.log("LAUNCH");
+//console.log("LAUNCH");
         app = this;
         app.series = createSeriesArray();
         app.ignoreZeroValues = app.getSetting("ignoreZeroValues");
@@ -117,12 +113,7 @@ console.log("LAUNCH");
         app.featureCompleteState = app.getSetting("featureCompleteState");
         app.msName = "";
         app.msDate = "";
-//        app.milestones = "";
-//        app.milestones = app.getSetting("milestones");
-//        app.epicIds = app.getSetting("epicIds");
 //        app.configReleases = app.getSetting("releases");
-        // featureCompleteByState  : false,
-        // featureCompleteState    : "",
 
         var selectMilestone = this.down('#selector_box').add({
             xtype: 'rallymilestonecombobox',
@@ -140,30 +131,17 @@ console.log("LAUNCH");
                         app.milestones = newValue;
                         app.msName = me.getRecord().get('Name');
                         app.msDate = me.getRecord().get('TargetDate');
-console.log("Change: ",newValue, app.msName, app.msDate, oldValue);
                         app.dothisnext();
                     }
                 }
             }
         });
     },
-    dothisnext: function() {
-        if (app.msName === "") {
-            this.add({html:"Please Configure this app by selecting 'Edit App Settings' menu item from Configure (gear icon) Menu (top right)"});
-            return;
-        }
 
+    dothisnext: function() {
         var that = this;
         // get the project id.
         this.project = this.getContext().getProject().ObjectID;
-
-        // get the release (if on a page scoped to the release)
-//        var tbName = getReleaseTimeBox(this);
-        // release selected page will over-ride app config
-// CB
-//        app.configReleases = tbName !== "" ? tbName : app.configReleases;
-//        app.milestones = tbName !== "" ? tbName : app.milestones;
-
         var configs = [];
 
         // query for estimate values, releases and iterations.
@@ -171,16 +149,9 @@ console.log("Change: ",newValue, app.msName, app.msDate, oldValue);
                        fetch : ['Name','ObjectID','Value'],
                        filters : []
         });
-// CB
-//        configs.push({ model : "Release",
-//                       fetch : ['Name', 'ObjectID', 'Project', 'ReleaseStartDate', 'ReleaseDate' ],
-//                       filters: [app.createReleaseFilter(app.configReleases)]
-//        });
         configs.push({ model : "Milestone",
                        fetch : ['Name', 'ObjectID','Artifacts', 'Projects', 'TargetDate', 'TargetProject' ],
                        filters: [{property: 'Name', operator: '=', value: app.msName}]
-
-//                       filters: [app.createReleaseFilter(app.configReleases)]
         });
         configs.push({ model : "TypeDefinition",
                        fetch : true,
@@ -189,15 +160,10 @@ console.log("Change: ",newValue, app.msName, app.msDate, oldValue);
 
         // get the preliminary estimate type values, and the releases.
         async.map( configs, app.wsapiQuery, function(err,results) {
-console.log("Results: ", results);
+//console.log("Results: ", results);
             app.peRecords   = results[0];
             app.releases    = results[1];
             app.featureType = results[2][0].get("TypePath");
-
-            if (app.releases.length===0) {
-                app.add({html:"No Milestones found with this name: "+app.milestones});
-                return;
-            }
 
             configs = [
                 {
@@ -210,42 +176,20 @@ console.log("Results: ", results);
             // get the iterations
             async.map( configs, app.wsapiQuery, function(err,results) {
                 app.iterations = results[0];
-console.log("Iterations: ", app.iterations);
+//console.log("Iterations: ", app.iterations);
                 app.queryFeatures();
-
             });
         });
-                this.setLoading(false);
     },
 
     // remove leading and trailing spaces
     trimString : function (str) {
-console.log("trimString");
+//console.log("trimString");
         return str.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
     },
 
-
-
-    // creates a filter to return all releases with a specified set of names
-    createReleaseFilter : function(releaseNames) {
-console.log("createReleaseFilter");
-        var filter = null;
-
-        _.each( releaseNames.split(","), function( releaseName, i ) {
-            if (releaseName !== "") {
-                var f = Ext.create('Rally.data.wsapi.Filter', {
-                        property : 'Name', operator : '=', value : app.trimString(releaseName) }
-                );
-                filter = (i===0) ? f : filter.or(f);
-            }
-        });
-        console.log("Release Filter:",filter.toString());
-        return filter;
-
-    },
-
     createIterationFilter : function(releases) {
-console.log("createReleaseFilter");
+//console.log("createReleaseFilter");
         var extent = app.getReleaseExtent(releases);
 
         var filter = Ext.create('Rally.data.wsapi.Filter', {
@@ -262,14 +206,18 @@ console.log("createReleaseFilter");
 
 //    getReleaseExtent : function( releases ) {
     getReleaseExtent : function( features ) {
-console.log("getReleaseExtent");
+//console.log("getReleaseExtent");
         var start = _.min(_.pluck(features,function(r) { return r.get("ActualStartDate");}));
         var end   = _.max(_.pluck(features,function(r) { return r.get("ActualEndDate");}));
-        var isoStart  = Rally.util.DateTime.toIsoString(start, false);
-        var isoEnd    = Rally.util.DateTime.toIsoString(end, false);
+        var isoStart  = Rally.util.DateTime.toUtcIsoString(start, false);  //earliest Feature.ActualStartDate
+        var isoAEnd = Rally.util.DateTime.toUtcIsoString(end, false);  //latest Feature.ActualEndDate
+        var isoCEnd = Rally.util.DateTime.toUtcIsoString(new Date(), false);  //current
+//        var isoEnd = isoAEnd > isoCEnd ? isoAEnd : isoCEnd;
+        if (app.msDate) {
+            isoEnd    = Rally.util.DateTime.toUtcIsoString(app.msDate, false);
+        }
 console.log("ISO dates: ", isoStart, isoEnd);
         return { start : start, end : end, isoStart : isoStart, isoEnd : isoEnd };
-
 
 /*
         var start = _.min(_.pluck(releases,function(r) { return r.get("ReleaseStartDate");}));
@@ -283,7 +231,6 @@ console.log("ISO dates: ", isoStart, isoEnd);
 
     // generic function to perform a web services query
     wsapiQuery : function( config , callback ) {
-console.log("wsapiQuery");
         Ext.create('Rally.data.WsapiDataStore', {
             autoLoad : true,
             limit : "Infinity",
@@ -344,7 +291,7 @@ console.log("queryEpicFeatures");
     },
 */
     queryFeatures : function() {
-console.log("queryFeatures");
+//console.log("queryFeatures");
         this.setLoading("Loading Features for Milestone...");
         myMask = new Ext.LoadMask(Ext.getBody(), {msg:"Please wait..."});
         var filter = null;
@@ -379,17 +326,16 @@ console.log("queryFeatures");
 //            model: 'PortfolioItem/Feature',
             model : app.featureType,
             limit : 'Infinity',
-            fetch: ['ObjectID','FormattedID','Milestones','Name','ActualStartDate' ],
+            fetch: ['ObjectID','FormattedID','Milestones','Name','ActualStartDate','ActualEndDate' ],
             filters: [{property: "Milestones.Name", operator: "=", value: app.msName}],
 //            filters: [filter],
             listeners: {
                 load: function(store, features) {
-                    console.log("Loaded:"+features.length," Features.",features);
-                    console.log(_.map(features,function(f){return f.get("FormattedID")}));
+console.log("Loaded:"+features.length," Features.",features);
+//                    console.log(_.map(features,function(f){return f.get("FormattedID")}));
                     app.features = features;
                     if (app.features.length === 0) {
-//                        app.add({html:"No features for Milestone:"+app.msName});
-                me.setLoading(false);
+                        me.setLoading(false);
                         alert("No features for Milestone: "+app.msName);
                         return;
                     } else {
@@ -401,7 +347,7 @@ console.log("queryFeatures");
     },
 
     queryFeatureSnapshots : function () {
-console.log("queryFeatureSnapshots");
+//console.log("queryFeatureSnapshots");
         this.setLoading("Loading snapshots...");
         var ids = _.pluck(app.features, function(feature) { return feature.get("ObjectID");} );
         var extent = app.getReleaseExtent(app.features);
@@ -434,7 +380,7 @@ console.log("queryFeatureSnapshots");
     },
 
     createChartData : function ( snapshots ) {
-console.log("CCD 1");
+//console.log("CCD 1");
         this.setLoading("Aggregating data...");
         var that = this;
 //        var lumenize = Rally.data.lookback.Lumenize || window.parent.Rally.data.lookback.Lumenize;
@@ -457,7 +403,7 @@ console.log("CCD 1");
             featureCompleteByState : app.featureCompleteByState,
             featureCompleteState : app.featureCompleteState
         });
-console.log("CCD 3: ", myCalc);
+//console.log("CCD 3: ", myCalc);
         // calculator config
         var config = {
             deriveFieldsOnInput: myCalc.getDerivedFieldsOnInput(),
@@ -469,13 +415,15 @@ console.log("CCD 3: ", myCalc);
             holidays: holidays,
             workDays: 'Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday'
         };
-console.log("before chart: ", extent.isoStart);
+//console.log("before chart: ", extent.isoStart);
         // release start and end dates
-        var startOnISOString = "2017-01-01T15:50:31Z";
-console.log("start: ", extent.isoStart, startOnISOString);
+//        var startOnISOString = "2017-01-01T15:50:31Z";
+        var startOnISOString = extent.isoStart;
+//console.log("start: ", extent.isoStart, startOnISOString);
 //        var upToDateISOString = new lumenize.Time(extent.end).getISOStringInTZ(config.tz);
-        var upToDateISOString = "2018-06-18T15:50:31Z";
-console.log("end: ", extent.isoEnd, upToDateISOString);
+//        var upToDateISOString = "2018-06-18T15:50:31Z";
+        var upToDateISOString = extent.isoEnd;
+//console.log("end: ", extent.isoEnd, upToDateISOString);
         // create the calculator and add snapshots to it.
         calculator = new myCalc.lumenize.TimeSeriesCalculator(config);
 //        new lumenize.TimeSeriesCalculator(config);
@@ -497,14 +445,14 @@ console.log("end: ", extent.isoEnd, upToDateISOString);
     },
 
     createPlotLines : function(seriesData) {
-console.log("createPlotLines-seriesdata",seriesData);
+//console.log("createPlotLines-seriesdata",seriesData);
         // filter the iterations
         var start = new Date( Date.parse(seriesData[0]));
         var end   = new Date( Date.parse(seriesData[seriesData.length-1]));
-console.log("createPlotLines-start-end",start,end);
+//console.log("createPlotLines-start-end",start,end);
         var releaseI = _.filter(this.iterations,function(i) { return i.get("EndDate") >= start && i.get("EndDate") <= end;});
         releaseI = _.uniq(releaseI,function(i) { return i.get("Name");});
-console.log("createPlotLines-releaseI",releaseI);
+//console.log("createPlotLines-releaseI",releaseI);
         var itPlotLines = _.map(releaseI, function(i){
             var d = new Date(Date.parse(i.raw.EndDate)).toISOString().split("T")[0];
             return {
@@ -528,14 +476,14 @@ console.log("createPlotLines-releaseI",releaseI);
                 value: _.indexOf(seriesData,d)
             };
         });
-console.log("createPlotLines",itPlotLines,rePlotLines);
+//console.log("createPlotLines",itPlotLines,rePlotLines);
         return itPlotLines.concat(rePlotLines);
 
     },
 
 
     showChart : function(series) {
-console.log("showChart");
+//console.log("showChart");
         this.setLoading("Building Chart...");
         var that = this;
 
@@ -544,19 +492,18 @@ console.log("showChart");
         console.log("Expected Completed Date1",app.expectedCompletionDate);
 
         var chart = this.down("#chart1");
-        if (chart !== null)
-            chart.removeAll();
+        if (chart) { chart.removeAll(); }
 
         // create plotlines
-console.log("showChart",series[0].data);
+//console.log("showChart",series[0].data);
         var plotlines = this.createPlotLines(series[0].data);
-console.log("showChart",plotlines);
+//console.log("showChart",plotlines);
 
         // set the tick interval
 //        var tickInterval = series[1].data.length <= (7*20) ? 7 : (series[1].data.length / 20);
         var tickInterval = series[1].data.length <= (7*20) ? 7 : (series[1].data.length / 20);
-console.log("showChart",tickInterval);
-
+//console.log("showChart",tickInterval);
+        var msTarget = app.msDate ? Rally.util.DateTime.format(app.msDate, 'Y-m-d') : ""
         var extChart = Ext.create('Rally.ui.chart.Chart', {
 //        var chart = this.down("#display_box").add({
             width: 800,
@@ -576,10 +523,10 @@ console.log("showChart",tickInterval);
                 title: {
                 text: 'Milestone Burnup ('+ app.msName  +')' ,
 
-                x: -20 //center
+ //               x: -20 //center
                 },
                 subtitle : {
-                    text: "Expected Completion Date: "+app.expectedCompletionDate
+                    text: "Milestone Target Date: "+msTarget +"<br>Expected Completion Date: "+app.expectedCompletionDate
                 },
                 plotOptions: {
                     series: {
@@ -614,7 +561,7 @@ console.log("showChart",tickInterval);
                 legend: { align: 'center', verticalAlign: 'bottom' }
             }
         });
-console.log("adding chart ",extChart);
+//console.log("adding chart ",extChart);
         this.add(extChart);
         chart = this.down("#chart1"); //#display_box
         this.setLoading(false);
